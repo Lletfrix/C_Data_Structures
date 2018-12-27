@@ -5,6 +5,7 @@
 #include "stack/stack.h"
 
 #define DECIMALS 3
+/*Compile: gcc test_stack.c stack/stack.c -o test_stack */
 
 char *int_str(void *x, size_t size){
     size_t digits = ceil(log10(* (int *) x));
