@@ -21,13 +21,17 @@ void bitvec_delete(bitvec *v){
     }
 }
 
-bitvec *bitvec_init(bitvec *v, size_t size){
+bitvec *bitvec_init(bitvec *v, size_t size, int *arr){
     if(v){
         if(size){
+            if(arr){
+                v->arr = arr;
+            }else{
+                v->arr = calloc(1,(size+1)/sizeof(int));
+                if(!v->arr) v->size = 0;
+            }
             v->size = size;
             v->wordsz = sizeof(int)*8;
-            v->arr = calloc(1,(size+1)/sizeof(int));
-            if(!v->arr) v->size = 0;
         }else{
             *v = (bitvec){0};
         }
@@ -50,6 +54,14 @@ void bitvec_set(bitvec *v, size_t k){
 void bitvec_clear(bitvec *v, size_t k){
     if(!v || k >= v->size) return;
     if(v->arr) v->arr[k/v->wordsz] &= ~(1 << (k%v->wordsz));
+}
+
+void bitvec_clear_all(bitvec *v){
+    if(v){
+        if(v->arr){
+            memset(v->arr, 0, (size+1)/sizeof(int));
+        }
+    }
 }
 
 int bitvec_test(bitvec *v, size_t k){
@@ -76,9 +88,23 @@ void bitvec_toggle(bitvec *v, size_t k){
     }
 }
 
-size_t bitvec_size(bitvec *v){
+size_t bitvec_len(bitvec *v){
     if(v){
         return v->size;
     }
     return 0;
+}
+
+size_t bitvec_size(bitvec *v){
+    if(v){
+        return (v->size+1)/sizeof(int);
+    }
+    return 0;
+}
+
+int *bitvec_arr(bitvec *v){
+    if(v){
+        return memcpy(malloc((size+1)/sizeof(int)),v->arr,(size+1)/sizeof(int));
+    }
+    return NULL;
 }
