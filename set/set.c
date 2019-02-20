@@ -138,6 +138,29 @@ set *set_union(set *s, set *t){
     return NULL;
 }
 
+set *set_intersec(set *s, set *t){
+    if(s && t && s->vec && t->vec){
+        if(s->hash != t->hash){
+            errno=EINVAL;
+            perror("set_intersec");
+            return NULL;
+        }
+        int *lrg_p, *sml_p;
+        size_t lrg_sz, sml_sz;
+
+        __get_szarr(s, t, &lrg_p, &sml_p, &lrg_sz, &sml_sz);
+        for(size_t i = 0; i < sml_sz; ++i){
+            sml_p[i] &= lrg_p[i];
+        }
+        free(lrg_p);
+        set *ret = __set_by_ints(sml_sz, sml_p, s->hash);
+        return ret;
+    }
+    errno=EINVAL;
+    perror("set_intersec");
+    return NULL;
+};
+
 set * __set_by_ints(size_t sz, int *p, size_t(*hash)(void *)){
     bitvec *vec = bitvec_init(bitvec_new(), sz, p);
     set *ret = set_new();

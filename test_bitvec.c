@@ -6,7 +6,7 @@
 /*Compile: gcc test_bitvec.c bitvec/bitvec.c -o test_bitvec */
 void main(){
     bitvec *v;
-    v = bitvec_init(bitvec_new(), 500);
+    v = bitvec_init(bitvec_new(), 500, NULL);
     bitvec_set(v, 255);
     printf("%d\n", bitvec_test(v, 255));
     bitvec_clear(v, 255);

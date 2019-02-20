@@ -42,7 +42,7 @@ bitvec *bitvec_init(bitvec *v, size_t size, int *arr){
 void bitvec_destroy(bitvec *v){
     if(v){
         free(v->arr);
-        bitvec_init(v, 0);
+        bitvec_init(v, 0, NULL);
     }
 }
 
@@ -59,7 +59,7 @@ void bitvec_clear(bitvec *v, size_t k){
 void bitvec_clear_all(bitvec *v){
     if(v){
         if(v->arr){
-            memset(v->arr, 0, (size+1)/sizeof(int));
+            memset(v->arr, 0, (v->size+1)/sizeof(int));
         }
     }
 }
@@ -104,7 +104,7 @@ size_t bitvec_size(bitvec *v){
 
 int *bitvec_arr(bitvec *v){
     if(v){
-        return memcpy(malloc((size+1)/sizeof(int)),v->arr,(size+1)/sizeof(int));
+        return memcpy(malloc((v->size+1)/sizeof(int)),v->arr,(v->size+1)/sizeof(int));
     }
     return NULL;
 }
