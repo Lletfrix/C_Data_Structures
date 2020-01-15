@@ -5,13 +5,15 @@
 #include <string.h>
 #include "bitvec.h"
 
+#define BITS 8
+
 struct bitvec {
     size_t size;
     size_t wordsz;
-    int *arr;
+    char *arr;
 };
 
-bitvec *bitvec_new(){
+bitvec * bitvec_new(){
     return malloc(sizeof(bitvec));
 }
 
@@ -21,17 +23,15 @@ void bitvec_delete(bitvec *v){
     }
 }
 
-bitvec *bitvec_init(bitvec *v, size_t size, int *arr){
+bitvec * bitvec_init(bitvec *v, size_t size, char *arr){
     if(v){
         if(size){
-            if(arr){
-                v->arr = arr;
-            }else{
-                v->arr = calloc(1,(size+1)/sizeof(int));
-                if(!v->arr) v->size = 0;
-            }
+            v->arr = calloc(1 + (size-1)/BITS, sizeof(char));
+            if(arr)
+                memcpy(v->arr, arr, (1 + (size-1)/BITS) * sizeof(char));
+            if(!v->arr) v->size = 0;
             v->size = size;
-            v->wordsz = sizeof(int)*8;
+            v->wordsz = sizeof(char)*BITS;
         }else{
             *v = (bitvec){0};
         }
@@ -39,27 +39,48 @@ bitvec *bitvec_init(bitvec *v, size_t size, int *arr){
     return v;
 }
 
-void bitvec_destroy(bitvec *v){
+bitvec * bitvec_destroy(bitvec *v){
     if(v){
         free(v->arr);
         bitvec_init(v, 0, NULL);
+    }
+    return v;
+}
+
+bitvec * bitvec_resize(bitvec *v, size_t newsz){
+    if (v){
+        size_t old_sz = (1 + (v->size-1)/BITS) * sizeof(char);
+        size_t new_sz = (1 + (newsz-1)/BITS) * sizeof(char);
+        v->arr = realloc(v->arr, (1 + (newsz-1)/BITS) * sizeof(char));
+        v->size = newsz;
+        if (new_sz > old_sz){
+            memset(v->arr+old_sz, 0, new_sz-old_sz);
+        }
     }
 }
 
 void bitvec_set(bitvec *v, size_t k){
     if(!v || k >= v->size) return;
-    if(v->arr) v->arr[k/v->wordsz] |= 1 << (k%v->wordsz);
+    if(v->arr) v->arr[k/v->wordsz] |= 1 << (v->wordsz-(k%v->wordsz)-1);
 }
 
 void bitvec_clear(bitvec *v, size_t k){
     if(!v || k >= v->size) return;
-    if(v->arr) v->arr[k/v->wordsz] &= ~(1 << (k%v->wordsz));
+    if(v->arr) v->arr[k/v->wordsz] &= ~(1 << (v->wordsz-(k%v->wordsz)-1));
 }
 
 void bitvec_clear_all(bitvec *v){
     if(v){
         if(v->arr){
-            memset(v->arr, 0, (v->size+1)/sizeof(int));
+            memset(v->arr, 0, (1 + (v->size-1)/BITS) * sizeof(char));
+        }
+    }
+}
+
+void bitvec_set_all(bitvec *v){
+    if(v){
+        if(v->arr){
+            memset(v->arr, -1, (1 + (v->size-1)/BITS) * sizeof(char));
         }
     }
 }
@@ -71,7 +92,7 @@ int bitvec_test(bitvec *v, size_t k){
         return 0;
     }
     if(v->arr){
-        if((v->arr[k/v->wordsz] & (1 << (k%v->wordsz)))){
+        if((v->arr[k/v->wordsz] & (1 << (v->wordsz-(k%v->wordsz)-1)))){
             return 1;
         }else{
             return 0;
@@ -88,23 +109,17 @@ void bitvec_toggle(bitvec *v, size_t k){
     }
 }
 
-size_t bitvec_len(bitvec *v){
+size_t bitvec_size(bitvec *v){
     if(v){
         return v->size;
     }
     return 0;
 }
 
-size_t bitvec_size(bitvec *v){
-    if(v){
-        return (v->size+1)/sizeof(int);
-    }
-    return 0;
-}
-
-int *bitvec_arr(bitvec *v){
-    if(v){
-        return memcpy(malloc((v->size+1)/sizeof(int)),v->arr,(v->size+1)/sizeof(int));
+char * bitvec_arr(bitvec *v, size_t *sz){
+    if(v && sz){
+        *sz = (1 + (v->size-1)/BITS) * sizeof(char);
+        return memcpy(malloc(*sz), v->arr, *sz);
     }
     return NULL;
 }
