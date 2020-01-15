@@ -4,16 +4,16 @@
 typedef struct stack stack;
 
 /* Returns an uninitialised stack pointer */
-stack *stack_new();
+stack * stack_new();
 
 /* Frees stack's pointer memory */
 void stack_delete(stack *);
 
 /* Initialise an uninitialised stack pointer */
-stack *stack_init(stack *, size_t stack_size, size_t memb_size);
+stack * stack_init(stack *, size_t stack_size, size_t memb_size);
 
 /* Free's the initialised memory in stack_init */
-void stack_destroy(stack *);
+stack * stack_destroy(stack *);
 
 /* Returns the top element of the stack or 0 if it fails*/
 void stack_peek(stack *, void *dest);

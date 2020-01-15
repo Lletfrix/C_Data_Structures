@@ -14,9 +14,10 @@ llist *llist_new(){
 
 void llist_delete(llist *l){
     if(l) free(l);
+    return l;
 }
 
-void llist_destroy(llist *l){
+llist *llist_destroy(llist *l){
     struct lnode *aux;
     struct lnode *first;
     if(l){
@@ -28,6 +29,7 @@ void llist_destroy(llist *l){
             }
         l->first = NULL;
     }
+    return l;
 }
 
 void *llist_head(llist *l){

@@ -13,7 +13,7 @@ struct stack {
     void *elems;
 };
 
-stack *stack_new(){
+stack * stack_new(){
     return malloc(sizeof(stack));
 }
 
@@ -23,7 +23,7 @@ void stack_delete(stack *s){
     }
 }
 
-stack *stack_init(stack *s, size_t size, size_t memb_sz){
+stack * stack_init(stack *s, size_t size, size_t memb_sz){
     if(s){
         if(size){
             s->top = 0;
@@ -38,11 +38,12 @@ stack *stack_init(stack *s, size_t size, size_t memb_sz){
     return s;
 }
 
-void stack_destroy(stack *s){
+stack * stack_destroy(stack *s){
     if(s){
         free(s->elems);
         stack_init(s, 0, 0);
     }
+    return s;
 }
 
 void stack_peek(stack *s, void *dest){

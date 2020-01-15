@@ -60,9 +60,11 @@ void llist_delete(llist *l);
  * of the linked list.
  *
  * @param l Linked list to destroy
+ *
+ * @return llist *. Pointed llist.
  * @ingroup linkedlist
  */
-void llist_destroy(llist *l);
+llist *llist_destroy(llist *l);
 
 /**
  * Return a pointer to the list's head.
