@@ -1,18 +1,13 @@
 #include <stddef.h>
 #include <stdlib.h>
-#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
 #include "../bitvec/bitvec.h"
 #include "set.h"
 
-#ifndef SETSZ
-#define  SETSZ 32
-#endif
-
-set *__set_by_ints();
-void __get_szarr(set *s, set *t, int **lrg, int **sml, size_t *lrg_sz, size_t *sml_sz);
+set * __set_by_bits();
+void __get_szarr(set *s, set *t, char **lrg_vec, char **sml_vec, size_t *lrg_sz, size_t *sml_sz, set **lrg, set **sml);
 
 struct set{
     size_t len;
@@ -21,7 +16,7 @@ struct set{
     size_t(*hash)(void *);
 };
 
-set *set_new(){
+set * set_new(){
     return malloc(sizeof(set));
 }
 
@@ -31,18 +26,15 @@ void set_delete(set *s){
     }
 }
 
-set *set_init(set *s, size_t(*maptoidx)(void *)){
+set * set_init(set *s, size_t size, size_t(*hash)(void *), char *vec){
     if(s){
-        if(maptoidx){
-            set->len = 0;
-            set->hash = maptoidx;
-            set->vec = bitvec_init(bitvec_new(), SETSZ);
-            set->size = SETSZ;
-            if(!set->vec){
-                errno=EAGAIN;
-                perror("set_init");
-                set->hash = NULL;
-                set->size = 0;
+        if(hash){
+            s->hash = hash;
+            s->vec = bitvec_init(bitvec_new(), size, vec);
+            s->size = size;
+            if(!s->vec){
+                s->hash = NULL;
+                s->size = 0;
             }
         }else{
             *s = (set){0};
@@ -50,59 +42,52 @@ set *set_init(set *s, size_t(*maptoidx)(void *)){
     }
     return s;
 }
-void set_destroy(set *s){
+set * set_destroy(set *s){
     if(s){
         if(s->vec){
-            free(s->vec);
-            set_init(s, NULL);
+            bitvec_delete(bitvec_destroy(s->vec));
+            set_init(s, 0, NULL, NULL);
         }
     }
+    return s;
 }
 
-size_t set_len(set *s){
+size_t set_cardinality(set *s){
     if(s){
-        return s->len;
+        size_t total=0;
+        for (size_t i = 0; i < s->size; i++) {
+            if (bitvec_test(s->vec, i)) total++;
+        }
+        return total;
     }
-    errno = EINVAL;
-    perror("set_len");
     return 0;
 }
 
-size_t set_in(set *s, void *x){
+bool set_in(set *s, void *x){
     if(s && x){
         if(s->hash){
             size_t idx = s->hash(x);
-            if(bitvec_test(s->vec, idx)){
-                return idx+1;
-            }
+            return bitvec_test(s->vec, idx);
         }
     }
-    errno=EINVAL;
-    perror("set_in");
-    return 0;
+    return false;
 }
 
 bool set_subset(set *s, set *t){
     if(s && t && s->vec && t->vec){
-        int *vt = bitvec_arr(t->vec);
-        int *vs = bitvec_arr(s->vec);
-        if(vs && vt){
-            for(size_t i = 0; i < s->size/sizeof(int); ++i){
-                if((vs[i] ^ vt[i]) != 0){
-                    free(vs);
-                    free(vt);
+        size_t s_sz = bitvec_size(s->vec);
+        size_t t_sz = bitvec_size(t->vec);
+
+        for (size_t i = 0; i < s_sz; i++) {
+            if (bitvec_test(s->vec, i)){
+                if (!bitvec_test(t->vec, i)){
                     return false;
                 }
             }
-            free(vs);
-            free(vt);
-            return true;
         }
+        return true;
     }
-    if (vs) free(vs);
-    if (vt) free(vt);
-    errno = EINVAL;
-    perror("set_subset");
+
     return false;
 }
 
@@ -114,70 +99,132 @@ void set_clear(set *s){
     }
 }
 
-set *set_union(set *s, set *t){
+void set_fill(set *s){
+    if(s){
+        if(s->vec){
+            bitvec_set_all(s->vec);
+        }
+    }
+}
+
+set * set_union(set *s, set *t){
     if(s && t && s->vec && t->vec){
         if(s->hash != t->hash){
-            errno=EINVAL;
-            perror("set_union");
             return NULL;
         }
-        int *lrg_p, *sml_p;
+        char *lrg_p, *sml_p;
         size_t lrg_sz, sml_sz;
+        set *lrg, *sml;
 
-        __get_szarr(s, t, &lrg_p, &sml_p, &lrg_sz, &sml_sz);
+        __get_szarr(s, t, &lrg_p, &sml_p, &lrg_sz, &sml_sz, &lrg, &sml);
 
         for(size_t i = 0; i < sml_sz; ++i){
             lrg_p[i] |= sml_p[i];
         }
+
+        set *ret = __set_by_bits(lrg->size, lrg_p, s->hash);
         free(sml_p);
-        set *ret = __set_by_ints(lrg_sz, lrg_p, s->hash);
+        free(lrg_p);
         return ret;
     }
-    errno=EINVAL;
-    perror("set_union");
     return NULL;
 }
 
 set *set_intersec(set *s, set *t){
     if(s && t && s->vec && t->vec){
         if(s->hash != t->hash){
-            errno=EINVAL;
-            perror("set_intersec");
             return NULL;
         }
-        int *lrg_p, *sml_p;
+        char *lrg_p, *sml_p;
         size_t lrg_sz, sml_sz;
+        set *lrg, *sml;
 
-        __get_szarr(s, t, &lrg_p, &sml_p, &lrg_sz, &sml_sz);
+        __get_szarr(s, t, &lrg_p, &sml_p, &lrg_sz, &sml_sz, &lrg, &sml);
+
         for(size_t i = 0; i < sml_sz; ++i){
-            sml_p[i] &= lrg_p[i];
+            lrg_p[i] &= sml_p[i];
         }
+        set *ret = __set_by_bits(lrg->size, lrg_p, s->hash);
+        free(sml_p);
         free(lrg_p);
-        set *ret = __set_by_ints(sml_sz, sml_p, s->hash);
         return ret;
     }
-    errno=EINVAL;
-    perror("set_intersec");
     return NULL;
+}
+
+set * set_diff(set *s, set *t){
+    set * ret=NULL;
+    if(s && t && s->vec && t->vec){
+        size_t s_sz = bitvec_size(s->vec);
+        size_t t_sz = bitvec_size(t->vec);
+        ret = set_copy(s);
+        for (size_t i = 0; i < t_sz; i++) {
+            if (bitvec_test(t->vec, i)){
+                bitvec_clear(ret->vec, i);
+            }
+        }
+    }
+    return ret;
 };
 
-set * __set_by_ints(size_t sz, int *p, size_t(*hash)(void *)){
-    bitvec *vec = bitvec_init(bitvec_new(), sz, p);
+set * set_complement(set *s){
+    if(s){
+        bitvec_toggle_all(s->vec);
+    }
+    return s;
+}
+
+set * set_copy(set *src){
+    set *dst;
+    size_t sz;
+    char *bits = bitvec_arr(src->vec, &sz);
+    dst = __set_by_bits(src->size, bits, src->hash);
+    free(bits);
+    return dst;
+}
+
+void set_add(set *s, void *x){
+    if(s && x){
+        if(s->hash){
+            size_t idx = s->hash(x);
+            bitvec_set(s->vec, idx);
+        }
+    }
+}
+
+void set_rm(set *s, void *x){
+    if(s && x){
+        if(s->hash){
+            size_t idx = s->hash(x);
+            bitvec_clear(s->vec, idx);
+        }
+    }
+}
+
+set * __set_by_bits(size_t sz, char *p, size_t(*hash)(void *)){
     set *ret = set_new();
-    set_init(ret, hash);
-    memcpy(ret->vec, vec, lrg_sz);
+    set_init(ret, sz, hash, p);
     return ret;
 }
 
-void __get_szarr(set *s, set *t, int **lrg, int **sml, size_t *lrg_sz, size_t *sml_sz){
-    set *lrg, *sml;
-    if(s->len > t->len){
-        lrg=s; sml=t;
+void __get_szarr(set *s, set *t, char **lrg_vec, char **sml_vec, size_t *lrg_sz, size_t *sml_sz, set **lrg, set **sml){
+    if(s->size > t->size){
+        *lrg=s; *sml=t;
     }else{
-        lrg=t; sml=s;
+        *lrg=t; *sml=s;
     }
-    *lrg = bitvec_arr(lrg->vec);
-    *sml = bitvec_arr(sml->vec);
-    *lrg_sz = bitvec_size(lrg->vec);
-    *sml_sz = bitvec_size(sml->vec);
+    *lrg_vec = bitvec_arr((*lrg)->vec, lrg_sz);
+    *sml_vec = bitvec_arr((*sml)->vec, sml_sz);
+}
+
+int set_print(FILE *f, set *s){
+    int total;
+    total = fprintf(f, "{ ");
+    for (size_t i = 0; i < s->size; i++) {
+        if (bitvec_test(s->vec, i)){
+            total += fprintf(f, "%ld ", i);
+        }
+    }
+    total += fprintf(f, "}\n");
+    return total;
 }

@@ -5,8 +5,6 @@
 #include <string.h>
 #include "bitvec.h"
 
-#define BITS 8
-
 struct bitvec {
     size_t size;
     size_t wordsz;
@@ -85,6 +83,17 @@ void bitvec_set_all(bitvec *v){
     }
 }
 
+void bitvec_toggle_all(bitvec *v){
+    if(v){
+        if(v->arr){
+            size_t sz = (1 + (v->size-1)/BITS) * sizeof(char);
+            for (size_t i = 0; i < sz; i++) {
+                v->arr[i] = ~v->arr[i];
+            }
+        }
+    }
+}
+
 int bitvec_test(bitvec *v, size_t k){
     if(!v || k >= v->size || !v->arr){
         errno = EINVAL;
@@ -116,10 +125,18 @@ size_t bitvec_size(bitvec *v){
     return 0;
 }
 
-char * bitvec_arr(bitvec *v, size_t *sz){
-    if(v && sz){
-        *sz = (1 + (v->size-1)/BITS) * sizeof(char);
-        return memcpy(malloc(*sz), v->arr, *sz);
+size_t bitvec_arr_sz(bitvec *v){
+    if(v){
+        return (1 + (v->size-1)/BITS) * sizeof(char);
+    }
+    return 0;
+}
+
+char * bitvec_arr(bitvec *v, size_t *ret){
+    if(v){
+        size_t sz = (1 + (v->size-1)/BITS) * sizeof(char);
+        if (ret) *ret = sz;
+        return memcpy(malloc(sz), v->arr, sz);
     }
     return NULL;
 }

@@ -1,4 +1,4 @@
-
+#define BITS 8
 typedef struct bitvec bitvec;
 
 /* Returns an uninitialised bitvec pointer */
@@ -31,6 +31,8 @@ int bitvec_test(bitvec *v, size_t pos);
 /* Get bitvec size */
 size_t bitvec_size(bitvec *v);
 
+size_t bitvec_arr_sz(bitvec *v);
+
 /* Gets a copy bitvec inner array */
 char * bitvec_arr(bitvec *v, size_t *sz);
 
@@ -39,3 +41,6 @@ void bitvec_clear_all(bitvec *v);
 
 /* Sets all bitvec to 1 */
 void bitvec_set_all(bitvec *v);
+
+/* Toggle all bitvec */
+void bitvec_toggle_all(bitvec *v);
