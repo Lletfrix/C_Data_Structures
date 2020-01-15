@@ -3,6 +3,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
 #include "stack.h"
 
 struct stack {
@@ -52,7 +53,8 @@ void stack_peek(stack *s, void *dest){
         errno = EPERM;
         perror("stack is empty");
     }else{
-        void *src = s->elems+(s->top-1)*s->memb_sz;
+        uint8_t *tmp = s->elems;
+        void *src = tmp+(s->top-1)*s->memb_sz;
         memcpy(dest, src, s->memb_sz);
     }
 }
@@ -78,7 +80,7 @@ void stack_push(stack *s, void *elem){
     }
     if(s->top == s->size){
         void *old = s->elems;
-        s->elems = realloc(s->elems, 2*s->size);
+        s->elems = realloc(s->elems, 2*s->size*s->memb_sz);
         if(!s->elems){
             errno = EPERM;
             perror("stack is full");
@@ -87,14 +89,21 @@ void stack_push(stack *s, void *elem){
         }
         s->size *=2;
     }
-    void *dest = s->elems + s->top * s->memb_sz;
+    uint8_t *tmp = s->elems;
+    void *dest = tmp + s->top * s->memb_sz;
     memcpy(dest, elem, s->memb_sz);
     s->top++;
 }
 
+size_t stack_top(stack *s){
+    if (s) return s->top;
+    return 0;
+}
+
 void stack_print(FILE *fout, stack *s, char *(*to_str)(void *, size_t)){
+    uint8_t *tmp = s->elems;
     for(int i = s->top-1; i>= 0; i--){
-        char *str = to_str(s->elems + (i*s->memb_sz), s->memb_sz);
+        char *str = to_str(tmp + (i*s->memb_sz), s->memb_sz);
         fprintf(fout, "( %s ) ", str);
         free(str);
     }

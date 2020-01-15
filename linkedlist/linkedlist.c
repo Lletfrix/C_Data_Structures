@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include "linkedlist.h"
+#include <stdbool.h>
+#include "linked_list.h"
 
 struct lnode *__lnode_new(void *val);
 
@@ -9,11 +10,11 @@ void __lnode_free();
 llist *llist_new(){
     llist *l = calloc(1, sizeof(llist));
     return l;
-};
+}
 
-void llist_free(llist *l){
+void llist_delete(llist *l){
     if(l) free(l);
-};
+}
 
 void llist_destroy(llist *l){
     struct lnode *aux;
@@ -33,7 +34,7 @@ void *llist_head(llist *l){
     if(l)
         return l->first->val;
     return NULL;
-};
+}
 
 int llist_add(llist *l, void *elem){
     if(l){
@@ -66,6 +67,21 @@ void *llist_del(llist *l, void *elem, int (*cmp_func) (void *, void *)){
         return aux;
     }
     return NULL;
+}
+
+bool llist_in(llist *l, void *elem, int (*cmp_func) (void *, void *)){
+    if(l){
+        struct lnode *temp = l->first;
+        if(temp && !cmp_func(elem, temp->val)){
+            return true;
+        }
+        while( temp && cmp_func(elem, temp->val)){
+            temp = temp->next;
+        }
+        if (!temp) return false;
+        return true;
+    }
+    return false;
 }
 
 void *llist_pop(llist *l){
