@@ -40,7 +40,7 @@ void matrix_delete(matrix *m){
     if (m) free(m);
 }
 
-void * matrix_element(matrix *m, size_t *indexes){
+void * matrix_get(matrix *m, size_t *indexes){
     if (!m || !indexes)
         return NULL;
     size_t abs = indexes[0];

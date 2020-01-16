@@ -25,13 +25,13 @@ int main(int argc, char const *argv[]) {
     m = matrix_init(matrix_new(), 4, space, sizeof(int), NULL);
     matrix_print(stdout, m, int_str);
     size_t selector[] = {1, 0, 0, 1};
-    int *x = (int *)matrix_element(m, selector);
+    int *x = (int *)matrix_get(m, selector);
     *x = 2;
     matrix_print(stdout, m, int_str);
     matrix_reshape(m, 2, space2);
     matrix_print(stdout, m, int_str);
     size_t selector2[] = {2, 1};
-    x = (int *)matrix_element(m, selector2);
+    x = (int *)matrix_get(m, selector2);
     *x = 1;
     matrix_print(stdout, m, int_str);
     matrix_delete(matrix_destroy(m));

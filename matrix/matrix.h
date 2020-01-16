@@ -18,7 +18,7 @@ matrix * matrix_destroy(matrix *m);
 
 void matrix_delete(matrix *m);
 
-void *matrix_element(matrix *m, size_t *indexes);
+void *matrix_get(matrix *m, size_t *indexes);
 
 matrix *matrix_reshape(matrix *m, size_t dim, size_t *space);
 
