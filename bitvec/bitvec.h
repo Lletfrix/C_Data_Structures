@@ -1,4 +1,6 @@
-#define BITS 8
+#ifndef BITVEC_H
+#define BITVEC_H
+
 typedef struct bitvec bitvec;
 
 /* Returns an uninitialised bitvec pointer */
@@ -44,3 +46,5 @@ void bitvec_set_all(bitvec *v);
 
 /* Toggle all bitvec */
 void bitvec_toggle_all(bitvec *v);
+
+#endif

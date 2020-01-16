@@ -1,9 +1,10 @@
 #include <stddef.h>
 #include <stdlib.h>
-#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include "bitvec.h"
+
+#define BITS 8
 
 struct bitvec {
     size_t size;
@@ -96,8 +97,6 @@ void bitvec_toggle_all(bitvec *v){
 
 int bitvec_test(bitvec *v, size_t k){
     if(!v || k >= v->size || !v->arr){
-        errno = EINVAL;
-        perror("bitvec_test");
         return 0;
     }
     if(v->arr){
