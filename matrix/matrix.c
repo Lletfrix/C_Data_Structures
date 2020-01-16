@@ -3,14 +3,6 @@
 #include <string.h>
 #include "matrix.h"
 
-struct _matrix {
-    size_t total;
-    size_t dim;
-    size_t *space;
-    size_t membsz;
-    void *mtx;
-};
-
 matrix * matrix_new(){
     return calloc(1, sizeof(matrix));
 }

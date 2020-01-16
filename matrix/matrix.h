@@ -1,7 +1,14 @@
 #ifndef MATRIX_H
 #define MATRIX_H
 
-typedef struct _matrix matrix;
+#include <stdlib.h>
+typedef struct _matrix {
+    size_t total;
+    size_t dim;
+    size_t *space;
+    size_t membsz;
+    void *mtx;
+} matrix;
 
 matrix * matrix_new();
 
